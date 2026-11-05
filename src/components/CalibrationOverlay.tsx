@@ -16,12 +16,14 @@ const POINTS: ScreenPoint[] = [
 ]
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+const MIN_POINT_SAMPLES = 18
 
 type Phase = 'intro' | 'settle' | 'collecting' | 'done' | 'error'
 
 export function CalibrationOverlay({
   open,
   hasModel,
+  faceVisible,
   collectPoint,
   trainCalibration,
   onFinish,
@@ -29,6 +31,7 @@ export function CalibrationOverlay({
 }: {
   open: boolean
   hasModel: boolean
+  faceVisible: boolean
   collectPoint: (
     target: ScreenPoint,
     durationMs?: number,
@@ -60,6 +63,11 @@ export function CalibrationOverlay({
   if (!open) return null
 
   const start = async () => {
+    if (!faceVisible) {
+      setPhase('error')
+      setMessage('没有检测到眼睛，请让面部和双眼出现在摄像头中再试')
+      return
+    }
     setPhase('settle')
     setMessage('')
     setProgress(0)
@@ -74,6 +82,11 @@ export function CalibrationOverlay({
         if (cancelledRef.current) return
         setPhase('collecting')
         const pointSamples = await collectPoint(POINTS[index], 2300)
+        if (pointSamples.length < MIN_POINT_SAMPLES) {
+          throw new Error(
+            `第 ${index + 1} 个校准点没有检测到足够的眼部数据，请重新对准摄像头`,
+          )
+        }
         samples.push(...pointSamples)
         setProgress((index + 1) / POINTS.length)
         setMessage(`已采集 ${samples.length} 帧眼部数据`)
@@ -126,9 +139,17 @@ export function CalibrationOverlay({
             <span>不要戴反光眼镜</span>
             <span>摄像头与视线齐平</span>
           </div>
-          <button className="primary-button large" onClick={start}>
+          <div className={`eye-status ${faceVisible ? 'is-visible' : ''}`}>
+            <span className="eye-status__dot" />
+            {faceVisible ? '眼睛已检测到，可以开始' : '正在寻找眼睛，请正对摄像头'}
+          </div>
+          <button
+            className="primary-button large"
+            onClick={start}
+            disabled={!faceVisible}
+          >
             <Icon name="target" />
-            开始校准
+            {faceVisible ? '开始校准' : '等待眼睛出现'}
             <Icon name="arrow" />
           </button>
         </div>
@@ -154,7 +175,10 @@ export function CalibrationOverlay({
             </div>
             <span>{Math.round(progress * 100)}%</span>
           </div>
-          <p className="calibration-status">{message || '请保持自然睁眼'}</p>
+          <p className={`calibration-status ${faceVisible ? 'is-visible' : ''}`}>
+            {faceVisible ? '眼睛已检测到' : '未检测到眼睛，请重新对准摄像头'}
+            {message ? ` · ${message}` : ''}
+          </p>
         </>
       )}
 

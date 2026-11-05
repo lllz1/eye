@@ -1399,6 +1399,37 @@ button:disabled {
   font-size: 9px;
 }
 
+.eye-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 14px;
+  padding: 6px 10px;
+  color: var(--muted-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.025);
+  font-size: 9px;
+}
+
+.eye-status__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--amber);
+}
+
+.eye-status.is-visible {
+  color: var(--mint);
+  border-color: rgba(126, 240, 210, 0.2);
+  background: rgba(126, 240, 210, 0.06);
+}
+
+.eye-status.is-visible .eye-status__dot {
+  background: var(--mint);
+  box-shadow: 0 0 10px rgba(126, 240, 210, 0.8);
+}
+
 .calibration-headline {
   position: absolute;
   top: 20%;
@@ -1488,6 +1519,10 @@ button:disabled {
   color: var(--muted-2);
   font-size: 9px;
   transform: translateX(-50%);
+}
+
+.calibration-status.is-visible {
+  color: var(--mint);
 }
 
 .result-mark {

@@ -37,6 +37,7 @@ export function useGazeTracker(
   const [fps, setFps] = useState(0)
   const [demoMode, setDemoMode] = useState(false)
   const [gazeModelReady, setGazeModelReady] = useState(false)
+  const [faceVisible, setFaceVisible] = useState(false)
 
   const landmarkerRef = useRef<any>(null)
   const gazeModelRef = useRef<any>(null)
@@ -50,6 +51,7 @@ export function useGazeTracker(
   const modelGazeRef = useRef<ModelGaze | null>(null)
   const modelBusyRef = useRef(false)
   const modelFrameRef = useRef(0)
+  const faceVisibleRef = useRef(false)
   const modelRef = useRef<CalibrationModel | null>(model)
   const demoModeRef = useRef(false)
   const lastUiRef = useRef(0)
@@ -64,6 +66,12 @@ export function useGazeTracker(
   useEffect(() => {
     demoModeRef.current = demoMode
   }, [demoMode])
+
+  const updateFaceVisible = useCallback((visible: boolean) => {
+    if (faceVisibleRef.current === visible) return
+    faceVisibleRef.current = visible
+    setFaceVisible(visible)
+  }, [])
 
   const drawPreview = useCallback(
     (landmarks: any[] | null) => {
@@ -142,6 +150,7 @@ export function useGazeTracker(
           const detection = detectGaze(landmarker, video, timestamp)
 
           if (detection) {
+            updateFaceVisible(true)
             let frame = detection.frame
             if (
               gazeModelRef.current &&
@@ -200,6 +209,7 @@ export function useGazeTracker(
 
             drawPreview(detection.landmarks)
           } else {
+            updateFaceVisible(false)
             latestFrameRef.current = null
             latestLandmarksRef.current = null
             modelGazeRef.current = null
@@ -223,12 +233,13 @@ export function useGazeTracker(
     }
 
     rafRef.current = requestAnimationFrame(loopFrame)
-  }, [drawPreview, videoRef])
+  }, [drawPreview, updateFaceVisible, videoRef])
 
   const startCamera = useCallback(async () => {
     if (status === 'loading') return
     setError('')
     setStatus('loading')
+    updateFaceVisible(false)
     try {
       if (!navigator.mediaDevices?.getUserMedia) {
         throw new Error('当前浏览器不支持摄像头访问，请使用 Chrome 或 Edge')
@@ -279,7 +290,7 @@ export function useGazeTracker(
       setError(message)
       setStatus('error')
     }
-  }, [loop, status, videoRef])
+  }, [loop, status, updateFaceVisible, videoRef])
 
   const stopCamera = useCallback(() => {
     runningRef.current = false
@@ -293,7 +304,8 @@ export function useGazeTracker(
     if (video) video.srcObject = null
     setStatus('idle')
     setCursor(null)
-  }, [videoRef])
+    updateFaceVisible(false)
+  }, [updateFaceVisible, videoRef])
 
   const enableDemoMode = useCallback((enabled: boolean) => {
     demoModeRef.current = enabled
@@ -321,6 +333,7 @@ export function useGazeTracker(
           const frame = latestFrameRef.current
           if (
             frame &&
+            performance.now() - frame.timestamp < 450 &&
             frame.faceDetected &&
             frame.blink < 0.55 &&
             frame.confidence > 0.25
@@ -381,6 +394,7 @@ export function useGazeTracker(
     fps,
     demoMode,
     gazeModelReady,
+    faceVisible,
     startCamera,
     stopCamera,
     enableDemoMode,

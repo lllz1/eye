@@ -41,6 +41,7 @@ function App() {
     fps,
     demoMode,
     gazeModelReady,
+    faceVisible,
     startCamera,
     stopCamera,
     enableDemoMode,
@@ -487,6 +488,7 @@ function App() {
       <CalibrationOverlay
         open={calibrationOpen}
         hasModel={Boolean(model)}
+        faceVisible={faceVisible}
         collectPoint={collectCalibrationPoint}
         trainCalibration={trainCalibration}
         onFinish={handleCalibrationFinish}
