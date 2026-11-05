@@ -70,10 +70,10 @@ export function CalibrationOverlay({
         if (cancelledRef.current) return
         setStep(index)
         setPhase('settle')
-        await sleep(650)
+        await sleep(900)
         if (cancelledRef.current) return
         setPhase('collecting')
-        const pointSamples = await collectPoint(POINTS[index], 1900)
+        const pointSamples = await collectPoint(POINTS[index], 2300)
         samples.push(...pointSamples)
         setProgress((index + 1) / POINTS.length)
         setMessage(`已采集 ${samples.length} 帧眼部数据`)
@@ -119,7 +119,7 @@ export function CalibrationOverlay({
           <h2>{hasModel ? '重新认识你的目光' : '先让目光和屏幕对齐'}</h2>
           <p>
             接下来会出现 9 个发光点。请坐正，保持面部在摄像头中，依次注视每个点，
-            不要移动头部。整个过程大约需要 20 秒。
+            不要移动头部。整个过程大约需要 30 秒。
           </p>
           <div className="calibration-tips">
             <span>保持光线均匀</span>

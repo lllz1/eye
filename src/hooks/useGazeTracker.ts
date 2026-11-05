@@ -322,8 +322,8 @@ export function useGazeTracker(
           if (
             frame &&
             frame.faceDetected &&
-            frame.blink < 0.65 &&
-            frame.confidence > 0.15
+            frame.blink < 0.55 &&
+            frame.confidence > 0.25
           ) {
             samples.push({
               features: buildFeatureVector(frame),

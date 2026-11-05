@@ -51,6 +51,10 @@ function eyePatch(
   const eyeCenterY = ((top.y + bottom.y) / 2) * video.videoHeight
   const boxW = width * 1.9
   const boxH = boxW * (EYE_H / EYE_W)
+  const angle = Math.atan2(
+    (inner.y - outer.y) * video.videoHeight,
+    (inner.x - outer.x) * video.videoWidth,
+  )
   const sx = Math.max(0, eyeCenterX - boxW / 2)
   const sy = Math.max(0, eyeCenterY - boxH / 2)
   const sw = Math.min(video.videoWidth - sx, boxW)
@@ -64,11 +68,20 @@ function eyePatch(
   if (!ctx) return null
   ctx.fillStyle = '#000'
   ctx.fillRect(0, 0, EYE_W, EYE_H)
-  if (flip) {
-    ctx.translate(EYE_W, 0)
-    ctx.scale(-1, 1)
-  }
-  ctx.drawImage(video, sx, sy, sw, sh, 0, 0, EYE_W, EYE_H)
+  ctx.translate(EYE_W / 2, EYE_H / 2)
+  ctx.rotate(-angle)
+  if (flip) ctx.scale(-1, 1)
+  ctx.drawImage(
+    video,
+    sx,
+    sy,
+    sw,
+    sh,
+    -EYE_W / 2,
+    -EYE_H / 2,
+    EYE_W,
+    EYE_H,
+  )
   ctx.setTransform(1, 0, 0, 1, 0, 0)
 
   const image = ctx.getImageData(0, 0, EYE_W, EYE_H)
