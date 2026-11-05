@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { RefObject } from 'react'
 import { createGazeLandmarker, detectGaze } from '../lib/faceLandmarker'
+import { loadGazeModel, predictModelGaze } from '../lib/gazeModel'
+import type { ModelGaze } from '../lib/gazeModel'
 import {
   buildFeatureVector,
   clearStoredCalibration,
@@ -34,8 +36,10 @@ export function useGazeTracker(
   const [cursor, setCursor] = useState<CursorState | null>(null)
   const [fps, setFps] = useState(0)
   const [demoMode, setDemoMode] = useState(false)
+  const [gazeModelReady, setGazeModelReady] = useState(false)
 
   const landmarkerRef = useRef<any>(null)
+  const gazeModelRef = useRef<any>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const rafRef = useRef<number | null>(null)
   const runningRef = useRef(false)
@@ -43,6 +47,9 @@ export function useGazeTracker(
   const lastTimestampRef = useRef(0)
   const latestFrameRef = useRef<GazeFrame | null>(null)
   const latestLandmarksRef = useRef<any[] | null>(null)
+  const modelGazeRef = useRef<ModelGaze | null>(null)
+  const modelBusyRef = useRef(false)
+  const modelFrameRef = useRef(0)
   const modelRef = useRef<CalibrationModel | null>(model)
   const demoModeRef = useRef(false)
   const lastUiRef = useRef(0)
@@ -135,25 +142,55 @@ export function useGazeTracker(
           const detection = detectGaze(landmarker, video, timestamp)
 
           if (detection) {
-            latestFrameRef.current = detection.frame
+            let frame = detection.frame
+            if (
+              gazeModelRef.current &&
+              !modelBusyRef.current &&
+              modelFrameRef.current % 2 === 0
+            ) {
+              modelBusyRef.current = true
+              const snapshot = detection.frame
+              const landmarks = detection.landmarks
+              void predictModelGaze(gazeModelRef.current, video, landmarks, snapshot)
+                .then((result) => {
+                  if (result) modelGazeRef.current = result
+                })
+                .catch((caught) => {
+                  console.warn('Gaze model inference failed', caught)
+                })
+                .finally(() => {
+                  modelBusyRef.current = false
+                })
+            }
+            modelFrameRef.current += 1
+            const modelGaze = modelGazeRef.current
+            if (modelGaze) {
+              frame = {
+                ...frame,
+                modelPitch: modelGaze.pitch,
+                modelYaw: modelGaze.yaw,
+                modelConfidence: modelGaze.confidence,
+              }
+            }
+            latestFrameRef.current = frame
             latestLandmarksRef.current = detection.landmarks
 
             if (nowTime - lastUiRef.current > 55) {
               lastUiRef.current = nowTime
-              setGaze(detection.frame)
+              setGaze(frame)
             }
 
             if (!demoModeRef.current) {
               const currentModel = modelRef.current
-              if (currentModel && detection.frame.confidence > 0.18) {
-                const features = buildFeatureVector(detection.frame)
+              if (currentModel && frame.confidence > 0.18) {
+                const features = buildFeatureVector(frame)
                 const raw = predictCalibration(currentModel, features)
                 const filteredX = filterXRef.current.filter(raw.x, nowTime)
                 const filteredY = filterYRef.current.filter(raw.y, nowTime)
                 setCursor({
                   x: filteredX * window.innerWidth,
                   y: filteredY * window.innerHeight,
-                  confidence: detection.frame.confidence,
+                  confidence: frame.confidence,
                   source: 'gaze',
                 })
               } else {
@@ -165,6 +202,7 @@ export function useGazeTracker(
           } else {
             latestFrameRef.current = null
             latestLandmarksRef.current = null
+            modelGazeRef.current = null
             if (!demoModeRef.current) {
               setCursor(null)
               setGaze(null)
@@ -216,6 +254,15 @@ export function useGazeTracker(
 
       if (!landmarkerRef.current) {
         landmarkerRef.current = await createGazeLandmarker()
+      }
+      if (!gazeModelRef.current) {
+        try {
+          gazeModelRef.current = await loadGazeModel()
+          setGazeModelReady(true)
+        } catch (caught) {
+          console.warn('Gaze model unavailable, using landmark features', caught)
+          setGazeModelReady(false)
+        }
       }
 
       runningRef.current = true
@@ -333,6 +380,7 @@ export function useGazeTracker(
     cursor,
     fps,
     demoMode,
+    gazeModelReady,
     startCamera,
     stopCamera,
     enableDemoMode,

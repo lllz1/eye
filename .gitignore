@@ -12,6 +12,14 @@ dist
 dist-ssr
 *.local
 
+# Local model training artifacts
+training/.venv/
+training/datasets/
+training/checkpoints/
+training/checkpoints_*/
+training/pytorch_mpiigaze/
+training/experiments/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

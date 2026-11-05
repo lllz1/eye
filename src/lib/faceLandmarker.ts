@@ -137,6 +137,8 @@ export function detectGaze(
   const nose = landmarks[1] ?? eyeMid
   const yaw = (nose.x - eyeMid.x) / interocular
   const pitch = (nose.y - eyeMid.y) / interocular
+  const headYaw = Math.atan2(nose.x - eyeMid.x, interocular)
+  const headPitch = Math.atan2(nose.y - eyeMid.y, interocular)
   const roll = Math.atan2(
     rightCenter.y - leftCenter.y,
     rightCenter.x - leftCenter.x,
@@ -163,6 +165,8 @@ export function detectGaze(
       yaw,
       pitch,
       roll,
+      headYaw,
+      headPitch,
       blink,
       ear,
       confidence,

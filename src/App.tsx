@@ -16,6 +16,9 @@ type Mode = 'expression' | 'draw'
 const percent = (value: number | undefined) =>
   value === undefined ? '—' : `${Math.round(value * 100)}%`
 
+const degrees = (value: number | undefined) =>
+  value === undefined ? '—' : `${((value * 180) / Math.PI).toFixed(1)}°`
+
 function App() {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const previewCanvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -37,6 +40,7 @@ function App() {
     cursor,
     fps,
     demoMode,
+    gazeModelReady,
     startCamera,
     stopCamera,
     enableDemoMode,
@@ -213,6 +217,7 @@ function App() {
               <Icon name="eye" size={14} /> 478 点面部追踪
             </span>
             <span>九点个体校准</span>
+            <span>MPIIGaze 视线模型</span>
             <span>视频仅在本地处理</span>
           </div>
         </main>
@@ -367,7 +372,7 @@ function App() {
               <div className="camera-corner br" />
             </div>
             <div className="camera-footnote">
-              <span>IRIS + HEAD POSE</span>
+              <span>{gazeModelReady ? 'AI GAZE + IRIS' : 'IRIS + HEAD POSE'}</span>
               <span>{fps} FPS</span>
             </div>
           </section>
@@ -437,6 +442,16 @@ function App() {
                 <strong>{demoMode ? '—' : percent(gaze?.blink)}</strong>
                 <div className="metric-bar warm"><span style={{ width: `${(gaze?.blink ?? 0) * 100}%` }} /></div>
               </div>
+              <div className="metric">
+                <span>AI 偏航</span>
+                <strong>{demoMode ? '—' : degrees(gaze?.modelYaw)}</strong>
+                <div className="metric-bar accent"><span style={{ width: `${Math.min(100, Math.abs(gaze?.modelYaw ?? 0) * 120)}%` }} /></div>
+              </div>
+              <div className="metric">
+                <span>AI 俯仰</span>
+                <strong>{demoMode ? '—' : degrees(gaze?.modelPitch)}</strong>
+                <div className="metric-bar accent"><span style={{ width: `${Math.min(100, Math.abs(gaze?.modelPitch ?? 0) * 120)}%` }} /></div>
+              </div>
             </div>
             <div className="telemetry-footer">
               <span>停留阈值</span>
@@ -458,7 +473,7 @@ function App() {
       </main>
 
       <footer className="app-footer">
-        <span>LOCAL VISION / MEDIAPIPE FACE LANDMARKER</span>
+        <span>LOCAL VISION / MEDIAPIPE + MPIIGAZE RESNET-8</span>
         <span>视频不会上传 · 仅保存在当前设备</span>
         <span className="footer-mark">目光所至 · 2026</span>
       </footer>

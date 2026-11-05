@@ -5,6 +5,7 @@
 ## 功能
 
 - MediaPipe Face Landmarker 面部/虹膜关键点追踪
+- MPIIGaze 训练的 ResNet-8 视线方向模型（留出受试者测试误差 3.95°）
 - 九点个体校准，使用多项式岭回归把眼部特征映射到屏幕坐标
 - One Euro 平滑与置信度门控
 - 注视停留 0.8 秒选择，带环形进度反馈
@@ -20,7 +21,8 @@
 ```powershell
 cd "C:\Users\lzz\Desktop\GazeCanvas"
 npm install
-npm run dev -- --host 127.0.0.1 --open
+npm run build
+npm run preview -- --host 127.0.0.1 --open
 ```
 
 也可以双击项目里的 `启动.bat`，或桌面上的「目光所至」快捷方式。
@@ -53,6 +55,8 @@ public/
 ## 技术说明
 
 摄像头画面通过 `getUserMedia` 获取，MediaPipe 在浏览器本地运行。每帧提取左右虹膜中心、眼角、上下眼睑和面部中心，计算眼部相对坐标、头部偏转和眨眼程度。九点校准后，用二次多项式加岭回归预测屏幕坐标，再由 One Euro 滤波器平滑。
+
+网页同时用 MediaPipe 关键点裁出左右眼区域，送入在 MPIIGaze 上训练的 ResNet-8 ONNX 模型，得到头部坐标系下的视线方向。该方向作为额外特征参与九点校准，弥补单纯虹膜位置对光照、眼型和头动不稳定的问题。训练和复现命令见 `training/README.md`。
 
 普通摄像头的注视估计精度通常只有几度视角，适合大按钮和低频操作，不适合精细文字或医疗级眼动追踪。实际使用时需要均匀光线、摄像头与视线大致齐平，并在头部位置变化后重新校准。
 

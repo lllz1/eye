@@ -14,8 +14,8 @@ export type CalibrationModel = {
   createdAt: number
 }
 
-export const FEATURE_COUNT = 11
-export const CALIBRATION_STORAGE_KEY = 'gaze-canvas-calibration-v1'
+export const FEATURE_COUNT = 13
+export const CALIBRATION_STORAGE_KEY = 'gaze-canvas-calibration-v2'
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value))
 
@@ -37,6 +37,8 @@ export function buildFeatureVector(frame: GazeFrame): number[] {
     frame.yaw * 4,
     frame.pitch * 4,
     frame.roll * 4,
+    (frame.modelYaw ?? 0) * 4,
+    (frame.modelPitch ?? 0) * 4,
   ]
 }
 

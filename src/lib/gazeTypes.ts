@@ -6,6 +6,11 @@ export type GazeFrame = {
   yaw: number
   pitch: number
   roll: number
+  headYaw: number
+  headPitch: number
+  modelYaw?: number
+  modelPitch?: number
+  modelConfidence?: number
   blink: number
   ear: number
   confidence: number
