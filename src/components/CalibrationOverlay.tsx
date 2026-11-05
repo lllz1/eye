@@ -93,6 +93,9 @@ export function CalibrationOverlay({
       }
 
       if (cancelledRef.current) return
+      if (samples.length < POINTS.length * MIN_POINT_SAMPLES) {
+        throw new Error('有效眼部样本不足，校准没有通过，请重新校准')
+      }
       const model = trainCalibration(samples)
       setResult(model)
       setPhase('done')
