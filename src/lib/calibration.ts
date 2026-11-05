@@ -15,7 +15,7 @@ export type CalibrationModel = {
 }
 
 export const FEATURE_COUNT = 13
-export const CALIBRATION_STORAGE_KEY = 'gaze-canvas-calibration-v2'
+export const CALIBRATION_STORAGE_KEY = 'gaze-canvas-calibration-v3'
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value))
 
